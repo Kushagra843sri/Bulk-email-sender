@@ -15,7 +15,6 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-
 app.post('/send-bulk', async (req, res) => {
   const { subject, content, recipients, emailUser, emailPass } = req.body;
 
@@ -53,6 +52,11 @@ app.post('/send-bulk', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+app.get('/', (req, res) => {
+  res.send('Bulk Email Sender backend is running');
+});
+
 
 
 
