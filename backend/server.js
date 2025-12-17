@@ -7,16 +7,12 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
-
 app.post('/send-bulk', async (req, res) => {
   const { subject, content, recipients, emailUser, emailPass } = req.body;
+
+  if (!subject || !content || !recipients || !Array.isArray(recipients)) {
+    return res.status(400).json({ error: 'Invalid payload' });
+  }
 
   if (!emailUser || !emailPass) {
     return res.status(400).json({ error: 'Email credentials are required' });
@@ -36,7 +32,7 @@ app.post('/send-bulk', async (req, res) => {
     .join('<br>');
 
   try {
-    const promises = recipients.map(to =>
+    const promises = recipients.map((to) =>
       transporter.sendMail({
         from: emailUser,
         to,
@@ -47,17 +43,18 @@ app.post('/send-bulk', async (req, res) => {
     );
 
     await Promise.all(promises);
-    res.json({ success: true, message: `Sent to ${recipients.length} recipients` });
+    res.json({
+      success: true,
+      message: `Sent to ${recipients.length} recipients`,
+    });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('Nodemailer error:', error);
+    res.status(500).json({ error: error.message || 'Internal server error' });
   }
 });
 
 app.get('/', (req, res) => {
   res.send('Bulk Email Sender backend is running');
 });
-
-
-
 
 app.listen(5000, () => console.log('Server on port 5000'));
